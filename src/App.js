@@ -2,46 +2,13 @@ import "./style.css";
 import supabase from "./superbase";
 import { useEffect, useState } from "react";
 
-const initialPrompts = [
-  {
-    id: 1,
-    text: "React is being developed by Meta (formerly facebook)",
-    source: "https://opensource.fb.com/",
-    category: "画面构图",
-    votesInteresting: 24,
-    votesMindblowing: 9,
-    votesFalse: 4,
-    createdIn: 2021,
-  },
-  {
-    id: 2,
-    text: "Millennial dads spend 3 times as much time with their kids than their fathers spent with them. In 1982, 43% of fathers had never changed a diaper. Today, that number is down to 3%",
-    source:
-      "https://www.mother.ly/parenting/millennial-dads-spend-more-time-with-their-kids",
-    category: "画面光线",
-    votesInteresting: 11,
-    votesMindblowing: 2,
-    votesFalse: 0,
-    createdIn: 2019,
-  },
-  {
-    id: 3,
-    text: "Lisbon is the capital of Portugal",
-    source: "https://en.wikipedia.org/wiki/Lisbon",
-    category: "材质质感",
-    votesInteresting: 8,
-    votesMindblowing: 3,
-    votesFalse: 1,
-    createdIn: 2015,
-  },
-];
-
 function App() {
   const [showForm, setShowForm] = useState(false);
   const [prompts, setPrompts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const [currentCategory, setCurrentCategory] = useState("全部");
+  const [sessionID, setSessionID] = useState("");
 
   useEffect(
     function () {
@@ -67,6 +34,12 @@ function App() {
     },
     [currentCategory]
   );
+  useEffect(() => {
+    const id = Math.random().toString(36).substring(2);
+    setSessionID(id);
+  }, []);
+
+  console.log("id", sessionID);
 
   return (
     <>
@@ -263,15 +236,17 @@ function Prompt({ prompt, setPrompts }) {
   const [isUpdating, setIsUpdating] = useState(false);
   const isDisputed =
     prompt.votesInteresting + prompt.votesMindblowing < prompt.votesFalse;
-
+  const [isDisabled, setIsDisabled] = useState(false); // 新增一个状态，用于判断按钮是否被禁用
   async function handleVote(columnName) {
     setIsUpdating(true);
+    setIsDisabled(true); // 点击按钮后，将所有按钮禁用
     const { data: updatedFact, error } = await supabase
       .from("prompts")
       .update({ [columnName]: prompt[columnName] + 1 })
       .eq("id", prompt.id)
       .select();
     setIsUpdating(false);
+    setIsDisabled(false); // 更新完成后，将所有按钮解禁
 
     console.log(updatedFact);
     if (!error)
@@ -313,19 +288,19 @@ function Prompt({ prompt, setPrompts }) {
             <div className="vote-buttons">
               <button
                 onClick={() => handleVote("votesInteresting")}
-                disabled={isUpdating}
+                disabled={isUpdating || isDisabled} // 将按钮的禁用状态与isDisabled状态绑定
               >
                 👍 {prompt.votesInteresting}
               </button>
               <button
                 onClick={() => handleVote("votesMindblowing")}
-                disabled={isUpdating}
+                disabled={isUpdating || isDisabled} // 将按钮的禁用状态与isDisabled状态绑定
               >
                 🤯 {prompt.votesMindblowing}
               </button>
               <button
                 onClick={() => handleVote("votesFalse")}
-                disabled={isUpdating}
+                disabled={isUpdating || isDisabled} // 将按钮的禁用状态与isDisabled状态绑定
               >
                 ⛔️ {prompt.votesFalse}
               </button>
